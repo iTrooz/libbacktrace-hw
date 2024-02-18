@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<filesystem>
 #include<functional>
+#include<dlfcn.h>
 
 #include<llvm/Demangle/Demangle.h>
 #include<backtrace.h>
@@ -12,13 +13,17 @@ void showStacktrace() {
 
     // backtrace_print(backtraceState, 0, stdout);
 
-    backtrace_full(backtraceState, 0, [](void *, uintptr_t, const char *fileName, int lineNumber, const char *function) -> int {
+    backtrace_full(backtraceState, 0, [](void *, uintptr_t pc, const char *fileName, int lineNumber, const char *function) -> int {
         if (fileName == nullptr)
             fileName = "??";
         if (function == nullptr)
             function = "??";
         
-        printf("file=%s,function=%s,line=%d\n",
+        Dl_info info;
+        dladdr((void*) pc, &info);
+        
+        printf("binfile=%s,srcfile=%s,function=%s,line=%d\n",
+            info.dli_fname,
             fileName,
             llvm::demangle(function).c_str(),
             lineNumber
